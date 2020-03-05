@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+    <title>Fetch and Graph CSV</title>
+  </head>
+  <body>
+    <canvas id="chart" width="800" height="400"></canvas>
+    <!-- <script src="app.js"></script> -->
+    <script>
+      const avgTemp = 14;
+
+      chartIt();
+
+      async function chartIt() {
+        let graphObj = await getData();
+        const ctx = document.getElementById('chart').getContext('2d');
+        const myChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: graphObj.xlabels,
+            datasets: [
+              {
+                label: 'Global Average Temperature in C°',
+                data: graphObj.ytemps,
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                borderColor: 'rgba(255, 99, 132, 1)',
+                borderWidth: 1,
+                fill: false
+              }
+            ]
+          },
+          options: {
+            scales: {
+              yAxes: [
+                {
+                  ticks: {
+                    // Include a dollar sign in the ticks
+                    callback: function(value) {
+                      return value + '°';
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        });
+      }
+
+      // Data from: https://data.giss.nasa.gov/gistemp/
+      async function getData() {
+        const xlabels = [];
+        const ytemps = [];
+        const response = await fetch('ZonAnn.Ts+dSST.csv');
+        const data = await response.text();
+        // get the rows, and remove the headers row from the resulting array
+        let table = data.split('\n').slice(1);
+        // rows.splice(0, 1);
+        table.forEach(row => {
+          const columns = row.split(',');
+          const year = columns[0];
+          const temp = columns[1];
+          xlabels.push(year);
+          ytemps.push(parseFloat(temp) + avgTemp);
+          // console.log(year, temp);
+        });
+        return { xlabels, ytemps };
+      }
+    </script>
+  </body>
+</html>

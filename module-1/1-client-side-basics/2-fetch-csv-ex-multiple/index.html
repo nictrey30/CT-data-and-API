@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+    <title>Fetch and Graph CSV</title>
+  </head>
+  <body>
+    <canvas id="chart" width="800" height="400"></canvas>
+    <!-- <script src="app.js"></script> -->
+    <script>
+      const avgTemp = 14;
+
+      chartIt();
+
+      async function chartIt() {
+        let graphObj = await getData();
+        const ctx = document.getElementById('chart').getContext('2d');
+        const myChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: graphObj.years,
+            datasets: [
+              {
+                label: 'Global Average Temperature in C°',
+                data: graphObj.temps,
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                borderColor: 'rgba(255, 99, 132, 1)',
+                borderWidth: 1,
+                fill: false
+              },
+              {
+                label: 'Northern Hemisphere Temperature in °C',
+                data: graphObj.northern,
+                backgroundColor: 'rgba(0, 255, 132, 0.2)',
+                borderColor: 'green',
+                borderWidth: 1,
+                fill: false
+              },
+              {
+                label: 'Southern Hemisphere Temperature in °C',
+                data: graphObj.southern,
+                backgroundColor: 'yellow',
+                borderColor: 'black',
+                borderWidth: 1,
+                fill: false
+              }
+            ]
+          },
+          options: {
+            scales: {
+              yAxes: [
+                {
+                  ticks: {
+                    // Include a dollar sign in the ticks
+                    callback: function(value) {
+                      return value + '°';
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        });
+      }
+
+      // Data from: https://data.giss.nasa.gov/gistemp/
+      async function getData() {
+        const response = await fetch('ZonAnn.Ts+dSST.csv');
+        const years = [];
+        const temps = [];
+        const northern = [];
+        const southern = [];
+        const data = await response.text();
+        // get the rows, and remove the headers row from the resulting array
+        let rows = data.split('\n').slice(1);
+        // rows.splice(0, 1);
+        rows.forEach(row => {
+          const columns = row.split(',');
+          console.log(columns);
+          years.push(columns[0]);
+          temps.push(parseFloat(columns[1]) + avgTemp);
+          northern.push(parseFloat(columns[2]) + avgTemp);
+          southern.push(parseFloat(columns[3]) + avgTemp);
+          // console.log(year, temp);
+        });
+        return { years, temps, northern, southern };
+      }
+    </script>
+  </body>
+</html>
